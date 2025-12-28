@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robot Pathfinding Algorithm Simulation</title>
+    <meta name="description" content="Interactive simulation comparing Dijkstra's, A*, Genetic Algorithm, and BFS pathfinding algorithms for autonomous grass-cutting robots">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 Robot Pathfinding Simulation</h1>
+            <p class="subtitle">Comparing algorithms for autonomous grass-cutting robots</p>
+        </header>
+
+        <main>
+            <div class="simulation-area">
+                <div class="controls-panel">
+                    <div class="control-group">
+                        <h3>Grid Controls</h3>
+                        <div class="button-group">
+                            <button id="clearBtn" class="btn btn-secondary">Clear Grid</button>
+                            <button id="randomObstaclesBtn" class="btn btn-secondary">Random Obstacles</button>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <h3>Drawing Mode</h3>
+                        <div class="mode-selector">
+                            <button id="obstacleMode" class="mode-btn active" data-mode="obstacle">
+                                <span class="mode-icon">🧱</span>
+                                Obstacle
+                            </button>
+                            <button id="startMode" class="mode-btn" data-mode="start">
+                                <span class="mode-icon">🟢</span>
+                                Start
+                            </button>
+                            <button id="endMode" class="mode-btn" data-mode="end">
+                                <span class="mode-icon">🎯</span>
+                                End
+                            </button>
+                            <button id="eraseMode" class="mode-btn" data-mode="erase">
+                                <span class="mode-icon">🧹</span>
+                                Erase
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <h3>Algorithm Selection</h3>
+                        <div class="algorithm-selector">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="dijkstraCheck" checked>
+                                <span class="checkmark"></span>
+                                Dijkstra's Algorithm
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="astarCheck" checked>
+                                <span class="checkmark"></span>
+                                A* Pathfinding
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="geneticCheck" checked>
+                                <span class="checkmark"></span>
+                                Genetic Algorithm
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="bfsCheck" checked>
+                                <span class="checkmark"></span>
+                                Breadth-First Search
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <h3>Visualization Speed</h3>
+                        <div class="speed-control">
+                            <input type="range" id="speedSlider" min="1" max="100" value="50">
+                            <span id="speedValue">50ms</span>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <button id="runBtn" class="btn btn-primary">▶ Run Simulation</button>
+                        <button id="stopBtn" class="btn btn-danger" disabled>⏹ Stop</button>
+                    </div>
+                </div>
+
+                <div class="grid-container">
+                    <canvas id="gridCanvas"></canvas>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <span class="legend-color" style="background: #4ade80;"></span>
+                            <span>Start</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background: #f87171;"></span>
+                            <span>End</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background: #334155;"></span>
+                            <span>Obstacle</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background: #60a5fa;"></span>
+                            <span>Exploring</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background: #a78bfa;"></span>
+                            <span>Visited</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background: #fbbf24;"></span>
+                            <span>Path</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="results-section">
+                <h2>Performance Metrics</h2>
+                <div id="resultsContainer" class="results-grid">
+                    <div class="result-card placeholder">
+                        <p>Run the simulation to see results</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Based on research comparing pathfinding algorithms for autonomous lawn mowers</p>
+        </footer>
+    </div>
+
+    <script src="simulation.js"></script>
+    <script src="dijkstra.js"></script>
+    <script src="astar.js"></script>
+    <script src="genetic.js"></script>
+    <script src="bfs.js"></script>
+    <script src="visualizer.js"></script>
+    <script src="metrics.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

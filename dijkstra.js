@@ -1,6 +1,6 @@
 // Dijkstra's Algorithm Implementation
 
-async function dijkstra(grid, visualizer, delay) {
+async function dijkstra(grid, visualizer, delay, allowDiagonal = false) {
     const startTime = performance.now();
 
     if (!grid.start || !grid.end) {
@@ -83,11 +83,11 @@ async function dijkstra(grid, visualizer, delay) {
             };
         }
 
-        // Check neighbors
-        const neighbors = grid.getNeighbors(current);
-        for (const neighbor of neighbors) {
+        // Check neighbors with costs
+        const neighbors = grid.getNeighbors(current, allowDiagonal);
+        for (const { cell: neighbor, cost } of neighbors) {
             if (!neighbor.isVisited) {
-                const newDistance = current.distance + 1;
+                const newDistance = current.distance + cost;
 
                 if (newDistance < neighbor.distance) {
                     neighbor.distance = newDistance;

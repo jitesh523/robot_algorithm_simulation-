@@ -1,6 +1,6 @@
 // Breadth-First Search Algorithm Implementation
 
-async function bfs(grid, visualizer, delay) {
+async function bfs(grid, visualizer, delay, allowDiagonal = false) {
     const startTime = performance.now();
 
     if (!grid.start || !grid.end) {
@@ -59,8 +59,8 @@ async function bfs(grid, visualizer, delay) {
         }
 
         // Explore neighbors
-        const neighbors = grid.getNeighbors(current);
-        for (const neighbor of neighbors) {
+        const neighbors = grid.getNeighbors(current, allowDiagonal);
+        for (const { cell: neighbor } of neighbors) {
             if (!neighbor.isVisited) {
                 neighbor.isVisited = true;
                 neighbor.parent = current;

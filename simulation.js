@@ -99,22 +99,32 @@ class Grid {
         return this.grid[row][col];
     }
 
-    getNeighbors(cell) {
+    getNeighbors(cell, allowDiagonal = false) {
         const neighbors = [];
         const directions = [
-            [-1, 0],  // up
-            [1, 0],   // down
-            [0, -1],  // left
-            [0, 1]    // right
+            { dr: -1, dc: 0, cost: 1 },   // up
+            { dr: 1, dc: 0, cost: 1 },    // down
+            { dr: 0, dc: -1, cost: 1 },   // left
+            { dr: 0, dc: 1, cost: 1 }     // right
         ];
 
-        for (const [dRow, dCol] of directions) {
-            const newRow = cell.row + dRow;
-            const newCol = cell.col + dCol;
+        if (allowDiagonal) {
+            directions.push(
+                { dr: -1, dc: -1, cost: 1.414 },  // up-left
+                { dr: -1, dc: 1, cost: 1.414 },   // up-right
+                { dr: 1, dc: -1, cost: 1.414 },   // down-left
+                { dr: 1, dc: 1, cost: 1.414 }     // down-right
+            );
+        }
+
+        for (const { dr, dc, cost } of directions) {
+            const newRow = cell.row + dr;
+            const newCol = cell.col + dc;
             const neighbor = this.getCell(newRow, newCol);
 
             if (neighbor && !neighbor.isObstacle) {
-                neighbors.push(neighbor);
+                // Attach cost to neighbor for this movement
+                neighbors.push({ cell: neighbor, cost });
             }
         }
 
@@ -258,6 +268,14 @@ function euclideanDistance(cell1, cell2) {
     const dx = cell1.row - cell2.row;
     const dy = cell1.col - cell2.col;
     return Math.sqrt(dx * dx + dy * dy);
+}
+
+function octileDistance(cell1, cell2) {
+    const dx = Math.abs(cell1.row - cell2.row);
+    const dy = Math.abs(cell1.col - cell2.col);
+    const D = 1;      // straight move cost
+    const D2 = 1.414; // diagonal move cost
+    return D * (dx + dy) + (D2 - 2 * D) * Math.min(dx, dy);
 }
 
 function reconstructPath(endCell) {

@@ -7,7 +7,7 @@ class Individual {
     }
 }
 
-async function genetic(grid, visualizer, delay) {
+async function genetic(grid, visualizer, delay, allowDiagonal = false) {
     const startTime = performance.now();
 
     if (!grid.start || !grid.end) {
@@ -29,7 +29,7 @@ async function genetic(grid, visualizer, delay) {
     const MUTATION_RATE = 0.1;
     const ELITE_SIZE = 5;
 
-    let population = initializePopulation(grid, startCell, endCell, POPULATION_SIZE);
+    let population = initializePopulation(grid, startCell, endCell, POPULATION_SIZE, allowDiagonal);
     let bestIndividual = null;
     let nodesExplored = 0;
 
@@ -70,7 +70,7 @@ async function genetic(grid, visualizer, delay) {
             let child = crossover(parent1, parent2);
 
             if (Math.random() < MUTATION_RATE) {
-                child = mutate(child, grid);
+                child = mutate(child, grid, allowDiagonal);
             }
 
             newPopulation.push(child);
@@ -114,18 +114,18 @@ async function genetic(grid, visualizer, delay) {
     };
 }
 
-function initializePopulation(grid, startCell, endCell, size) {
+function initializePopulation(grid, startCell, endCell, size, allowDiagonal) {
     const population = [];
 
     for (let i = 0; i < size; i++) {
-        const path = generateRandomPath(grid, startCell, endCell);
+        const path = generateRandomPath(grid, startCell, endCell, allowDiagonal);
         population.push(new Individual(path));
     }
 
     return population;
 }
 
-function generateRandomPath(grid, startCell, endCell, maxLength = 100) {
+function generateRandomPath(grid, startCell, endCell, allowDiagonal = false, maxLength = 100) {
     const path = [startCell];
     let current = startCell;
 
@@ -134,19 +134,22 @@ function generateRandomPath(grid, startCell, endCell, maxLength = 100) {
             break;
         }
 
-        const neighbors = grid.getNeighbors(current);
+        const neighbors = grid.getNeighbors(current, allowDiagonal);
         if (neighbors.length === 0) {
             break;
         }
 
+        // Extract just cells from neighbor objects
+        const neighborCells = neighbors.map(n => n.cell);
+
         // Bias towards end cell
         if (Math.random() < 0.7) {
-            neighbors.sort((a, b) =>
+            neighborCells.sort((a, b) =>
                 manhattanDistance(a, endCell) - manhattanDistance(b, endCell)
             );
         }
 
-        const next = neighbors[Math.floor(Math.random() * Math.min(3, neighbors.length))];
+        const next = neighborCells[Math.floor(Math.random() * Math.min(3, neighborCells.length))];
         path.push(next);
         current = next;
     }
@@ -212,7 +215,7 @@ function crossover(parent1, parent2) {
     return new Individual(childPath);
 }
 
-function mutate(individual, grid) {
+function mutate(individual, grid, allowDiagonal = false) {
     const path = [...individual.path];
 
     if (path.length < 2) {
@@ -221,10 +224,10 @@ function mutate(individual, grid) {
 
     const mutationPoint = Math.floor(Math.random() * (path.length - 1)) + 1;
     const cell = path[mutationPoint];
-    const neighbors = grid.getNeighbors(cell);
+    const neighbors = grid.getNeighbors(cell, allowDiagonal);
 
     if (neighbors.length > 0) {
-        const newCell = neighbors[Math.floor(Math.random() * neighbors.length)];
+        const newCell = neighbors[Math.floor(Math.random() * neighbors.length)].cell;
         path[mutationPoint] = newCell;
     }
 

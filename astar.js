@@ -1,6 +1,6 @@
 // A* Pathfinding Algorithm Implementation
 
-async function astar(grid, visualizer, delay) {
+async function astar(grid, visualizer, delay, allowDiagonal = false) {
     const startTime = performance.now();
 
     if (!grid.start || !grid.end) {
@@ -18,7 +18,10 @@ async function astar(grid, visualizer, delay) {
 
     // Initialize
     startCell.distance = 0; // g(n)
-    startCell.heuristic = manhattanDistance(startCell, endCell); // h(n)
+    // Use Octile distance for diagonal, Manhattan for straight
+    startCell.heuristic = allowDiagonal ?
+        octileDistance(startCell, endCell) :
+        manhattanDistance(startCell, endCell); // h(n)
 
     const openSet = [startCell];
     const closedSet = new Set();
@@ -72,14 +75,14 @@ async function astar(grid, visualizer, delay) {
             current.isExploring = false;
         }
 
-        // Check neighbors
-        const neighbors = grid.getNeighbors(current);
-        for (const neighbor of neighbors) {
+        // Check neighbors with costs
+        const neighbors = grid.getNeighbors(current, allowDiagonal);
+        for (const { cell: neighbor, cost } of neighbors) {
             if (closedSet.has(neighbor)) {
                 continue;
             }
 
-            const tentativeG = current.distance + 1;
+            const tentativeG = current.distance + cost;
 
             if (!openSet.includes(neighbor)) {
                 openSet.push(neighbor);
@@ -90,7 +93,9 @@ async function astar(grid, visualizer, delay) {
             // This path is the best so far
             neighbor.parent = current;
             neighbor.distance = tentativeG;
-            neighbor.heuristic = manhattanDistance(neighbor, endCell);
+            neighbor.heuristic = allowDiagonal ?
+                octileDistance(neighbor, endCell) :
+                manhattanDistance(neighbor, endCell);
         }
 
         if (visualizer) {

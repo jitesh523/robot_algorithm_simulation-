@@ -121,6 +121,7 @@ async function runSimulation() {
     metricsTracker.clear();
 
     const delay = parseInt(document.getElementById('speedSlider').value);
+    const allowDiagonal = document.getElementById('diagonalCheck').checked;
 
     const algorithms = [];
     if (document.getElementById('dijkstraCheck').checked) {
@@ -154,7 +155,7 @@ async function runSimulation() {
 
         console.log(`Running ${algo.name}...`);
 
-        const result = await algo.func(gridClone, visualizerClone, delay);
+        const result = await algo.func(gridClone, visualizerClone, delay, allowDiagonal);
         metricsTracker.addResult(algo.name, result);
         metricsTracker.displayResults();
 

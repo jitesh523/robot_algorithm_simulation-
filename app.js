@@ -216,3 +216,12 @@ function stopSimulation() {
     document.getElementById('runBtn').disabled = false;
     document.getElementById('stopBtn').disabled = true;
 }
+
+// Export Results
+document.getElementById('exportCSVBtn').addEventListener('click', () => {
+    metricsTracker.exportToCSV();
+});
+
+document.getElementById('exportJSONBtn').addEventListener('click', () => {
+    metricsTracker.exportToJSON();
+});

@@ -102,4 +102,60 @@ class MetricsTracker {
 
         return successful[0];
     }
+
+    exportToCSV() {
+        if (this.results.length === 0) {
+            alert('No results to export');
+            return;
+        }
+
+        const headers = ['Algorithm', 'Status', 'Path Length', 'Path Cost', 'Nodes Explored', 'Time (ms)', 'Timestamp'];
+        const rows = this.results.map(r => [
+            r.algorithm,
+            r.success ? 'Success' : 'Failed',
+            r.pathLength || 'N/A',
+            r.pathCost ? r.pathCost.toFixed(2) : 'N/A',
+            r.nodesExplored || 0,
+            r.timeElapsed.toFixed(2),
+            r.timestamp.toISOString()
+        ]);
+
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `pathfinding-results-${Date.now()}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    exportToJSON() {
+        if (this.results.length === 0) {
+            alert('No results to export');
+            return;
+        }
+
+        const exportData = {
+            exportDate: new Date().toISOString(),
+            totalResults: this.results.length,
+            results: this.results.map(r => ({
+                ...r,
+                timestamp: r.timestamp.toISOString()
+            }))
+        };
+
+        const json = JSON.stringify(exportData, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `pathfinding-results-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
 }

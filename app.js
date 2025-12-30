@@ -84,6 +84,31 @@ function setupEventListeners() {
         renderer.render();
     });
 
+    // Save/Load Grid Configuration
+    document.getElementById('saveGridBtn').addEventListener('click', () => {
+        grid.saveToFile('grid-config');
+    });
+
+    document.getElementById('loadGridBtn').addEventListener('click', () => {
+        document.getElementById('gridFileInput').click();
+    });
+
+    document.getElementById('gridFileInput').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            try {
+                await grid.loadFromFile(file);
+                renderer.render();
+                console.log('Grid configuration loaded successfully');
+            } catch (error) {
+                console.error('Error loading grid configuration:', error);
+                alert('Failed to load grid configuration. Please check the file format.');
+            }
+            // Reset file input
+            e.target.value = '';
+        }
+    });
+
     document.getElementById('runBtn').addEventListener('click', runSimulation);
     document.getElementById('stopBtn').addEventListener('click', stopSimulation);
 

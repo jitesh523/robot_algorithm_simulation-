@@ -165,6 +165,103 @@ class Grid {
         }
     }
 
+    serializeGrid() {
+        const config = {
+            version: '1.0',
+            timestamp: new Date().toISOString(),
+            gridSize: {
+                rows: this.rows,
+                cols: this.cols
+            },
+            start: this.start,
+            end: this.end,
+            cells: []
+        };
+
+        // Only store non-default cells to reduce JSON size
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                const cell = this.grid[row][col];
+                if (cell.isObstacle || cell.isStart || cell.isEnd || cell.terrainType !== 'normal') {
+                    config.cells.push({
+                        row,
+                        col,
+                        isObstacle: cell.isObstacle,
+                        isStart: cell.isStart,
+                        isEnd: cell.isEnd,
+                        terrainType: cell.terrainType,
+                        terrainCost: cell.terrainCost
+                    });
+                }
+            }
+        }
+
+        return config;
+    }
+
+    loadGrid(config) {
+        // Validate configuration
+        if (!config || !config.gridSize) {
+            throw new Error('Invalid grid configuration');
+        }
+
+        // Check if grid size matches
+        if (config.gridSize.rows !== this.rows || config.gridSize.cols !== this.cols) {
+            console.warn('Grid size mismatch. Reinitializing grid.');
+            this.rows = config.gridSize.rows;
+            this.cols = config.gridSize.cols;
+            this.initialize();
+        } else {
+            // Clear current grid
+            this.clear();
+        }
+
+        // Restore start and end
+        this.start = config.start;
+        this.end = config.end;
+
+        // Restore cells
+        for (const cellData of config.cells) {
+            const cell = this.grid[cellData.row][cellData.col];
+            cell.isObstacle = cellData.isObstacle || false;
+            cell.isStart = cellData.isStart || false;
+            cell.isEnd = cellData.isEnd || false;
+            cell.terrainType = cellData.terrainType || 'normal';
+            cell.terrainCost = cellData.terrainCost || 1.0;
+        }
+    }
+
+    saveToFile(filename = 'grid-config') {
+        const config = this.serializeGrid();
+        const json = JSON.stringify(config, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${filename}-${Date.now()}.json`;
+        a.click();
+
+        URL.revokeObjectURL(url);
+    }
+
+    loadFromFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const config = JSON.parse(e.target.result);
+                    this.loadGrid(config);
+                    resolve(config);
+                } catch (error) {
+                    reject(error);
+                }
+            };
+            reader.onerror = reject;
+            reader.readAsText(file);
+        });
+    }
+
     clone() {
         const clonedGrid = new Grid(this.rows, this.cols, this.cellSize);
         for (let row = 0; row < this.rows; row++) {

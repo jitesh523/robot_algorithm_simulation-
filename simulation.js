@@ -1,5 +1,14 @@
 // Grid simulation core functionality
 
+// Terrain type definitions
+const TERRAIN_TYPES = {
+    normal: { name: 'Normal', cost: 1.0, color: '#1e293b' },
+    grass: { name: 'Grass', cost: 1.5, color: '#22c55e' },
+    mud: { name: 'Mud', cost: 2.0, color: '#92400e' },
+    water: { name: 'Water', cost: 3.0, color: '#3b82f6' },
+    sand: { name: 'Sand', cost: 1.8, color: '#fbbf24' }
+};
+
 class Grid {
     constructor(rows, cols, cellSize) {
         this.rows = rows;
@@ -27,7 +36,9 @@ class Grid {
                     isPath: false,
                     distance: Infinity,
                     heuristic: 0,
-                    parent: null
+                    parent: null,
+                    terrainType: 'normal',
+                    terrainCost: 1.0
                 };
             }
         }
@@ -87,6 +98,17 @@ class Grid {
             case 'erase':
                 if (!cell.isStart && !cell.isEnd) {
                     cell.isObstacle = false;
+                    cell.terrainType = 'normal';
+                    cell.terrainCost = 1.0;
+                }
+                break;
+            case 'grass':
+            case 'mud':
+            case 'water':
+            case 'sand':
+                if (!cell.isStart && !cell.isEnd && !cell.isObstacle) {
+                    cell.terrainType = type;
+                    cell.terrainCost = TERRAIN_TYPES[type].cost;
                 }
                 break;
         }
@@ -123,8 +145,9 @@ class Grid {
             const neighbor = this.getCell(newRow, newCol);
 
             if (neighbor && !neighbor.isObstacle) {
-                // Attach cost to neighbor for this movement
-                neighbors.push({ cell: neighbor, cost });
+                // Total cost = movement cost * terrain cost
+                const totalCost = cost * neighbor.terrainCost;
+                neighbors.push({ cell: neighbor, cost: totalCost });
             }
         }
 
@@ -200,8 +223,8 @@ class GridRenderer {
         const y = cell.row * this.grid.cellSize;
         const size = this.grid.cellSize;
 
-        // Determine cell color
-        let color = '#1e293b'; // default background
+        // Determine cell color with terrain as base layer
+        let color = TERRAIN_TYPES[cell.terrainType].color; // terrain color as default
 
         if (cell.isStart) {
             color = '#4ade80'; // green
@@ -288,4 +311,28 @@ function reconstructPath(endCell) {
     }
 
     return path;
+}
+
+function calculatePathCost(path, allowDiagonal = false) {
+    if (!path || path.length < 2) {
+        return 0;
+    }
+
+    let totalCost = 0;
+    for (let i = 1; i < path.length; i++) {
+        const prev = path[i - 1];
+        const curr = path[i];
+
+        // Calculate movement cost (straight or diagonal)
+        const dx = Math.abs(curr.row - prev.row);
+        const dy = Math.abs(curr.col - prev.col);
+        const isDiagonal = dx > 0 && dy > 0;
+        const movementCost = isDiagonal ? 1.414 : 1.0;
+
+        // Apply terrain cost
+        const terrainCost = curr.terrainCost || 1.0;
+        totalCost += movementCost * terrainCost;
+    }
+
+    return totalCost;
 }

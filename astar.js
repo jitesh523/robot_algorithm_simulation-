@@ -57,6 +57,7 @@ async function astar(grid, visualizer, delay, allowDiagonal = false) {
                 success: true,
                 message: "Path found",
                 pathLength: path.length - 1,
+                pathCost: calculatePathCost(path, allowDiagonal),
                 nodesExplored,
                 timeElapsed: endTime - startTime,
                 path

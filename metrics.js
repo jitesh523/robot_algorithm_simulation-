@@ -50,8 +50,14 @@ class MetricsTracker {
             </div>
             <div class="metric">
                 <span class="metric-label">Path Length</span>
-                <span class="metric-value">${result.pathLength} units</span>
+                <span class="metric-value">${result.pathLength} cells</span>
             </div>
+            ${result.pathCost ? `
+            <div class="metric">
+                <span class="metric-label">Path Cost</span>
+                <span class="metric-value">${result.pathCost.toFixed(2)} units</span>
+            </div>
+            ` : ''}
             <div class="metric">
                 <span class="metric-label">Nodes Explored</span>
                 <span class="metric-value">${result.nodesExplored.toLocaleString()}</span>

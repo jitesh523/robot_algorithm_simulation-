@@ -225,3 +225,11 @@ document.getElementById('exportCSVBtn').addEventListener('click', () => {
 document.getElementById('exportJSONBtn').addEventListener('click', () => {
     metricsTracker.exportToJSON();
 });
+
+// Reset Parameters
+document.getElementById('resetParamsBtn').addEventListener('click', () => {
+    document.getElementById('astarWeight').value = 1.0;
+    document.getElementById('gaPopulation').value = 50;
+    document.getElementById('gaGenerations').value = 100;
+    document.getElementById('gaMutationRate').value = 0.1;
+});

@@ -233,3 +233,47 @@ document.getElementById('resetParamsBtn').addEventListener('click', () => {
     document.getElementById('gaGenerations').value = 100;
     document.getElementById('gaMutationRate').value = 0.1;
 });
+
+// Preset Scenarios
+document.getElementById('presetSelector').addEventListener('change', (e) => {
+    const preset = e.target.value;
+    if (preset) {
+        grid.loadPreset(preset);
+        renderer.render();
+        e.target.value = ''; // Reset selector
+    }
+});
+
+// Keyboard Shortcuts
+document.addEventListener('keydown', (e) => {
+    // Ignore if typing in input field
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
+        return;
+    }
+
+    switch (e.key.toLowerCase()) {
+        case ' ': // Space - Run simulation
+            e.preventDefault();
+            if (!isRunning) {
+                document.getElementById('runBtn').click();
+            }
+            break;
+        case 'escape': // Esc - Stop simulation
+            if (isRunning) {
+                document.getElementById('stopBtn').click();
+            }
+            break;
+        case 'c': // C - Clear grid
+            document.getElementById('clearBtn').click();
+            break;
+        case 's': // S - Save grid
+            document.getElementById('saveGridBtn').click();
+            break;
+        case 'l': // L - Load grid
+            document.getElementById('loadGridBtn').click();
+            break;
+        case 'r': // R - Random obstacles
+            document.getElementById('randomObstaclesBtn').click();
+            break;
+    }
+});

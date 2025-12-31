@@ -165,6 +165,102 @@ class Grid {
         }
     }
 
+    loadPreset(presetName) {
+        this.clear();
+        const presets = {
+            maze: () => {
+                // Create maze pattern
+                for (let row = 5; row < 35; row += 4) {
+                    for (let col = 5; col < 45; col++) {
+                        if (col % 8 !== 3) {
+                            this.grid[row][col].isObstacle = true;
+                        }
+                    }
+                }
+                this.setCell(5, 5, 'start');
+                this.setCell(34, 44, 'end');
+            },
+            terrain: () => {
+                // Terrain challenge with water and mud
+                for (let row = 10; row < 30; row++) {
+                    for (let col = 15; col < 25; col++) {
+                        this.grid[row][col].terrainType = 'water';
+                        this.grid[row][col].terrainCost = 3.0;
+                    }
+                }
+                for (let row = 15; row < 25; row++) {
+                    for (let col = 30; col < 40; col++) {
+                        this.grid[row][col].terrainType = 'mud';
+                        this.grid[row][col].terrainCost = 2.0;
+                    }
+                }
+                this.setCell(5, 5, 'start');
+                this.setCell(34, 44, 'end');
+            },
+            narrow: () => {
+                // Narrow passages
+                for (let col = 0; col < this.cols; col++) {
+                    this.grid[15][col].isObstacle = true;
+                    this.grid[25][col].isObstacle = true;
+                }
+                this.grid[15][25].isObstacle = false;
+                this.grid[25][25].isObstacle = false;
+                this.setCell(5, 10, 'start');
+                this.setCell(35, 40, 'end');
+            },
+            scattered: () => {
+                // Scattered obstacles with grass terrain
+                for (let i = 0; i < 100; i++) {
+                    const row = Math.floor(Math.random() * (this.rows - 10)) + 5;
+                    const col = Math.floor(Math.random() * (this.cols - 10)) + 5;
+                    this.grid[row][col].isObstacle = true;
+                }
+                for (let row = 10; row < 30; row++) {
+                    for (let col = 10; col < 40; col++) {
+                        if (Math.random() < 0.3) {
+                            this.grid[row][col].terrainType = 'grass';
+                            this.grid[row][col].terrainCost = 1.5;
+                        }
+                    }
+                }
+                this.setCell(5, 5, 'start');
+                this.setCell(34, 44, 'end');
+            },
+            mixed: () => {
+                // Mixed obstacles and terrain
+                // Vertical wall with gap
+                for (let row = 10; row < 30; row++) {
+                    if (row !== 20) {
+                        this.grid[row][25].isObstacle = true;
+                    }
+                }
+                // Terrain types in quadrants
+                for (let row = 0; row < 20; row++) {
+                    for (let col = 0; col < 25; col++) {
+                        if (Math.random() < 0.2) {
+                            this.grid[row][col].terrainType = 'sand';
+                            this.grid[row][col].terrainCost = 1.8;
+                        }
+                    }
+                }
+                for (let row = 20; row < this.rows; row++) {
+                    for (let col = 25; col < this.cols; col++) {
+                        if (Math.random() < 0.15) {
+                            this.grid[row][col].terrainType = 'mud';
+                            this.grid[row][col].terrainCost = 2.0;
+                        }
+                    }
+                }
+                this.setCell(2, 2, 'start');
+                this.setCell(37, 47, 'end');
+            }
+        };
+
+        if (presets[presetName]) {
+            presets[presetName]();
+        }
+    }
+
     serializeGrid() {
         const config = {
             version: '1.0',

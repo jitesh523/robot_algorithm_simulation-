@@ -553,3 +553,67 @@ function calculatePathCost(path, allowDiagonal = false) {
 
     return totalCost;
 }
+
+// Path Smoothing - String Pulling Algorithm
+function smoothPath(path, grid) {
+    if (!path || path.length <= 2) return path;
+
+    const smoothed = [path[0]];
+    let current = 0;
+
+    while (current < path.length - 1) {
+        let farthest = current + 1;
+
+        // Find farthest visible point from current
+        for (let i = path.length - 1; i > current + 1; i--) {
+            if (hasLineOfSight(path[current], path[i], grid)) {
+                farthest = i;
+                break;
+            }
+        }
+
+        smoothed.push(path[farthest]);
+        current = farthest;
+    }
+
+    return smoothed;
+}
+
+function hasLineOfSight(cell1, cell2, grid) {
+    // Bresenham's line algorithm to check if path is clear
+    const x0 = cell1.col;
+    const y0 = cell1.row;
+    const x1 = cell2.col;
+    const y1 = cell2.row;
+
+    const dx = Math.abs(x1 - x0);
+    const dy = Math.abs(y1 - y0);
+    const sx = x0 < x1 ? 1 : -1;
+    const sy = y0 < y1 ? 1 : -1;
+    let err = dx - dy;
+
+    let x = x0;
+    let y = y0;
+
+    while (true) {
+        // Check if current cell is obstacle
+        const cell = grid.getCell(y, x);
+        if (cell && cell.isObstacle) {
+            return false;
+        }
+
+        if (x === x1 && y === y1) break;
+
+        const e2 = 2 * err;
+        if (e2 > -dy) {
+            err -= dy;
+            x += sx;
+        }
+        if (e2 < dx) {
+            err += dx;
+            y += sy;
+        }
+    }
+
+    return true;
+}

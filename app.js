@@ -198,13 +198,20 @@ async function runSimulation() {
 
         // Store result for comparison dashboard
         if (result.success && result.path) {
+            // Apply path smoothing
+            const smoothedPath = smoothPath(result.path, gridClone);
+            const smoothedCost = calculatePathCost(smoothedPath, allowDiagonal);
+
             allAlgorithmResults.push({
                 name: algo.name,
                 path: result.path,
+                smoothedPath: smoothedPath,
                 color: ALGORITHM_COLORS[algo.name] || '#888888',
                 metrics: {
                     pathLength: result.pathLength,
                     pathCost: result.pathCost,
+                    smoothedLength: smoothedPath.length - 1,
+                    smoothedCost: smoothedCost,
                     nodesExplored: result.nodesExplored,
                     timeElapsed: result.timeElapsed
                 }

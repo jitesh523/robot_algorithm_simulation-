@@ -16,6 +16,7 @@ const CELL_SIZE = 15;
 
 // Comparison Dashboard - Store all algorithm results
 let allAlgorithmResults = [];
+let algorithmReplays = {}; // Store recordings for each algorithm
 
 // Algorithm color mapping for path overlay
 const ALGORITHM_COLORS = {
@@ -190,9 +191,17 @@ async function runSimulation() {
         const rendererClone = new GridRenderer(document.getElementById('gridCanvas'), gridClone);
         const visualizerClone = new Visualizer(rendererClone);
 
+        // Start recording
+        visualizerClone.startRecording();
+
         console.log(`Running ${algo.name}...`);
 
         const result = await algo.func(gridClone, visualizerClone, delay, allowDiagonal);
+
+        // Stop recording and store
+        const recording = visualizerClone.stopRecording();
+        algorithmReplays[algo.name] = recording;
+
         metricsTracker.addResult(algo.name, result);
         metricsTracker.displayResults();
 
@@ -244,10 +253,52 @@ async function runSimulation() {
         document.getElementById('comparisonSection').style.display = 'block';
     }
 
+    // Show replay section if we have recordings
+    if (Object.keys(algorithmReplays).length > 0) {
+        document.getElementById('replaySection').style.display = 'block';
+        populateReplaySelect();
+    }
+
     isRunning = false;
     document.getElementById('runBtn').disabled = false;
     document.getElementById('stopBtn').disabled = true;
 }
+
+function populateReplaySelect() {
+    const select = document.getElementById('replayAlgorithmSelect');
+    select.innerHTML = '<option value="">-- Choose --</option>';
+
+    for (const algoName in algorithmReplays) {
+        const option = document.createElement('option');
+        option.value = algoName;
+        option.textContent = algoName;
+        select.appendChild(option);
+    }
+}
+
+// Replay Controls
+document.getElementById('replayAlgorithmSelect').addEventListener('change', (e) => {
+    document.getElementById('replayBtn').disabled = !e.target.value;
+});
+
+document.getElementById('replaySpeed').addEventListener('input', (e) => {
+    document.getElementById('replaySpeedLabel').textContent = e.target.value + '×';
+});
+
+document.getElementById('replayBtn').addEventListener('click', async () => {
+    const algoName = document.getElementById('replayAlgorithmSelect').value;
+    const speed = parseFloat(document.getElementById('replaySpeed').value);
+
+    if (!algoName || !algorithmReplays[algoName]) return;
+
+    document.getElementById('replayBtn').disabled = true;
+    document.getElementById('replayBtn').textContent = '⏸ Playing...';
+
+    await visualizer.replay(algorithmReplays[algoName], grid, speed);
+
+    document.getElementById('replayBtn').disabled = false;
+    document.getElementById('replayBtn').textContent = '▶ Play Replay';
+});
 
 function stopSimulation() {
     isRunning = false;

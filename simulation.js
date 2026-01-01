@@ -460,6 +460,30 @@ class GridRenderer {
         }
     }
 
+    renderPathOverlay(algorithmResults, visibilityToggles = {}) {
+        for (const result of algorithmResults) {
+            if (visibilityToggles[result.name] === false) continue;
+
+            this.ctx.strokeStyle = result.color;
+            this.ctx.lineWidth = 3;
+            this.ctx.globalAlpha = 0.7;
+            this.ctx.lineCap = 'round';
+
+            if (result.path && result.path.length > 1) {
+                this.ctx.beginPath();
+                for (let i = 0; i < result.path.length; i++) {
+                    const cell = result.path[i];
+                    const x = cell.col * this.grid.cellSize + this.grid.cellSize / 2;
+                    const y = cell.row * this.grid.cellSize + this.grid.cellSize / 2;
+                    if (i === 0) this.ctx.moveTo(x, y);
+                    else this.ctx.lineTo(x, y);
+                }
+                this.ctx.stroke();
+            }
+            this.ctx.globalAlpha = 1.0;
+        }
+    }
+
     getCellFromMouseEvent(event) {
         const rect = this.canvas.getBoundingClientRect();
         const scaleX = this.canvas.width / rect.width;

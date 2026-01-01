@@ -14,6 +14,17 @@ const GRID_ROWS = 40;
 const GRID_COLS = 50;
 const CELL_SIZE = 15;
 
+// Comparison Dashboard - Store all algorithm results
+let allAlgorithmResults = [];
+
+// Algorithm color mapping for path overlay
+const ALGORITHM_COLORS = {
+    "Dijkstra's Algorithm": '#3b82f6',  // Blue
+    'A* Pathfinding': '#22c55e',        // Green
+    'Genetic Algorithm': '#a855f7',     // Purple
+    'Breadth-First Search': '#f97316'   // Orange
+};
+
 // Initialize application
 document.addEventListener('DOMContentLoaded', () => {
     initializeGrid();
@@ -144,6 +155,7 @@ async function runSimulation() {
     document.getElementById('stopBtn').disabled = false;
 
     metricsTracker.clear();
+    allAlgorithmResults = []; // Clear previous results
 
     const delay = parseInt(document.getElementById('speedSlider').value);
     const allowDiagonal = document.getElementById('diagonalCheck').checked;
@@ -184,6 +196,21 @@ async function runSimulation() {
         metricsTracker.addResult(algo.name, result);
         metricsTracker.displayResults();
 
+        // Store result for comparison dashboard
+        if (result.success && result.path) {
+            allAlgorithmResults.push({
+                name: algo.name,
+                path: result.path,
+                color: ALGORITHM_COLORS[algo.name] || '#888888',
+                metrics: {
+                    pathLength: result.pathLength,
+                    pathCost: result.pathCost,
+                    nodesExplored: result.nodesExplored,
+                    timeElapsed: result.timeElapsed
+                }
+            });
+        }
+
         // Wait a bit before next algorithm
         await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -203,6 +230,11 @@ async function runSimulation() {
             }
         }
         renderer.render();
+    }
+
+    // Show comparison section if multiple results
+    if (allAlgorithmResults.length > 1) {
+        document.getElementById('comparisonSection').style.display = 'block';
     }
 
     isRunning = false;

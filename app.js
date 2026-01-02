@@ -26,6 +26,54 @@ const ALGORITHM_COLORS = {
     'Breadth-First Search': '#f97316'   // Orange
 };
 
+// Undo/Redo System
+const actionHistory = {
+    past: [],
+    future: [],
+    maxSize: 50,
+
+    record(snapshot) {
+        this.past.push(snapshot);
+        this.future = []; // Clear future when new action is made
+        if (this.past.length > this.maxSize) {
+            this.past.shift(); // Remove oldest
+        }
+    },
+
+    canUndo() {
+        return this.past.length > 0;
+    },
+
+    canRedo() {
+        return this.future.length > 0;
+    },
+
+    undo() {
+        if (this.canUndo()) {
+            const snapshot = this.past.pop();
+            const current = grid.serializeGrid();
+            this.future.push(current);
+            return snapshot;
+        }
+        return null;
+    },
+
+    redo() {
+        if (this.canRedo()) {
+            const snapshot = this.future.pop();
+            const current = grid.serializeGrid();
+            this.past.push(current);
+            return snapshot;
+        }
+        return null;
+    },
+
+    clear() {
+        this.past = [];
+        this.future = [];
+    }
+};
+
 // Initialize application
 document.addEventListener('DOMContentLoaded', () => {
     initializeGrid();
@@ -130,13 +178,24 @@ function setupEventListeners() {
     });
 
     // Control buttons
+    // Clear Grid
     document.getElementById('clearBtn').addEventListener('click', () => {
+        actionHistory.record(grid.serializeGrid());
         grid.clear();
         grid.setCell(5, 5, 'start');
-        grid.setCell(GRID_ROWS - 6, GRID_COLS - 6, 'end');
+        grid.setCell(grid.rows - 6, grid.cols - 6, 'end');
         renderer.render();
         metricsTracker.clear();
         metricsTracker.displayResults();
+    });
+
+    // Undo/Redo buttons
+    document.getElementById('undoBtn').addEventListener('click', () => {
+        performUndo();
+    });
+
+    document.getElementById('redoBtn').addEventListener('click', () => {
+        performRedo();
     });
 
     // Random Obstacles
@@ -201,275 +260,315 @@ function handleCanvasClick(event) {
 
     if (row >= 0 && row < grid.rows && col >= 0 && col < grid.cols) {
         grid.setCell(row, col, currentMode);
-        renderer.render();
-    }
-}
+        const cell = renderer.getCellFromMouseEvent(event);
 
-function showCellTooltip(event) {
-    const tooltip = document.getElementById('cellTooltip');
-    const cell = renderer.getCellFromMouseEvent(event);
+        if (cell) {
+            // Record state before change for undo
+            if (currentMode !== 'start' && currentMode !== 'end') {
+                actionHistory.record(grid.serializeGrid());
+            }
 
-    if (!cell) {
-        tooltip.style.display = 'none';
-        return;
-    }
-
-    // Build tooltip content
-    let content = `<div style="line-height: 1.5;">`;
-    content += `<strong>Cell (${cell.row}, ${cell.col})</strong><br>`;
-
-    // Terrain info
-    const terrainNames = {
-        'normal': 'Normal',
-        'grass': 'Grass',
-        'mud': 'Mud',
-        'water': 'Water',
-        'sand': 'Sand'
-    };
-    content += `Terrain: ${terrainNames[cell.terrainType] || 'Normal'} (${cell.terrainCost.toFixed(1)}×)<br>`;
-
-    // Cell state
-    if (cell.isStart) content += `<span style="color: #22c55e;">● Start Point</span><br>`;
-    if (cell.isEnd) content += `<span style="color: #ef4444;">● End Point</span><br>`;
-    if (cell.isObstacle) content += `<span style="color: #94a3b8;">● Obstacle</span><br>`;
-    if (cell.isPath) content += `<span style="color: #fbbf24;">● On Path</span><br>`;
-    if (cell.isVisited) content += `<span style="color: #a78bfa;">● Visited</span><br>`;
-    if (cell.isExploring) content += `<span style="color: #60a5fa;">● Exploring</span><br>`;
-
-    // Distance (if calculated)
-    if (cell.distance && cell.distance !== Infinity) {
-        content += `Distance: ${cell.distance.toFixed(2)}`;
+            grid.setCell(cell.row, cell.col, currentMode);
+            renderer.render();
+        }
     }
 
-    content += `</div>`;
+    function showCellTooltip(event) {
+        const tooltip = document.getElementById('cellTooltip');
+        const cell = renderer.getCellFromMouseEvent(event);
 
-    tooltip.innerHTML = content;
-    tooltip.style.display = 'block';
-    tooltip.style.left = (event.clientX + 15) + 'px';
-    tooltip.style.top = (event.clientY + 15) + 'px';
-}
+        if (!cell) {
+            tooltip.style.display = 'none';
+            return;
+        }
 
-async function runSimulation() {
-    if (isRunning) return;
+        // Build tooltip content
+        let content = `<div style="line-height: 1.5;">`;
+        content += `<strong>Cell (${cell.row}, ${cell.col})</strong><br>`;
 
-    if (!grid.start || !grid.end) {
-        alert('Please set both start and end points!');
-        return;
+        // Terrain info
+        const terrainNames = {
+            'normal': 'Normal',
+            'grass': 'Grass',
+            'mud': 'Mud',
+            'water': 'Water',
+            'sand': 'Sand'
+        };
+        content += `Terrain: ${terrainNames[cell.terrainType] || 'Normal'} (${cell.terrainCost.toFixed(1)}×)<br>`;
+
+        // Cell state
+        if (cell.isStart) content += `<span style="color: #22c55e;">● Start Point</span><br>`;
+        if (cell.isEnd) content += `<span style="color: #ef4444;">● End Point</span><br>`;
+        if (cell.isObstacle) content += `<span style="color: #94a3b8;">● Obstacle</span><br>`;
+        if (cell.isPath) content += `<span style="color: #fbbf24;">● On Path</span><br>`;
+        if (cell.isVisited) content += `<span style="color: #a78bfa;">● Visited</span><br>`;
+        if (cell.isExploring) content += `<span style="color: #60a5fa;">● Exploring</span><br>`;
+
+        // Distance (if calculated)
+        if (cell.distance && cell.distance !== Infinity) {
+            content += `Distance: ${cell.distance.toFixed(2)}`;
+        }
+
+        content += `</div>`;
+
+        tooltip.innerHTML = content;
+        tooltip.style.display = 'block';
+        tooltip.style.left = (event.clientX + 15) + 'px';
+        tooltip.style.top = (event.clientY + 15) + 'px';
     }
 
-    isRunning = true;
-    document.getElementById('runBtn').disabled = true;
-    document.getElementById('stopBtn').disabled = false;
+    async function runSimulation() {
+        if (isRunning) return;
 
-    metricsTracker.clear();
-    allAlgorithmResults = []; // Clear previous results
+        if (!grid.start || !grid.end) {
+            alert('Please set both start and end points!');
+            return;
+        }
 
-    const delay = parseInt(document.getElementById('speedSlider').value);
-    const allowDiagonal = document.getElementById('diagonalCheck').checked;
+        isRunning = true;
+        document.getElementById('runBtn').disabled = true;
+        document.getElementById('stopBtn').disabled = false;
 
-    const algorithms = [];
-    if (document.getElementById('dijkstraCheck').checked) {
-        algorithms.push({ name: "Dijkstra's Algorithm", func: dijkstra });
-    }
-    if (document.getElementById('astarCheck').checked) {
-        algorithms.push({ name: "A* Pathfinding", func: astar });
-    }
-    if (document.getElementById('geneticCheck').checked) {
-        algorithms.push({ name: "Genetic Algorithm", func: genetic });
-    }
-    if (document.getElementById('bfsCheck').checked) {
-        algorithms.push({ name: "Breadth-First Search", func: bfs });
-    }
+        metricsTracker.clear();
+        allAlgorithmResults = []; // Clear previous results
 
-    if (algorithms.length === 0) {
-        alert('Please select at least one algorithm!');
+        const delay = parseInt(document.getElementById('speedSlider').value);
+        const allowDiagonal = document.getElementById('diagonalCheck').checked;
+
+        const algorithms = [];
+        if (document.getElementById('dijkstraCheck').checked) {
+            algorithms.push({ name: "Dijkstra's Algorithm", func: dijkstra });
+        }
+        if (document.getElementById('astarCheck').checked) {
+            algorithms.push({ name: "A* Pathfinding", func: astar });
+        }
+        if (document.getElementById('geneticCheck').checked) {
+            algorithms.push({ name: "Genetic Algorithm", func: genetic });
+        }
+        if (document.getElementById('bfsCheck').checked) {
+            algorithms.push({ name: "Breadth-First Search", func: bfs });
+        }
+
+        if (algorithms.length === 0) {
+            alert('Please select at least one algorithm!');
+            isRunning = false;
+            document.getElementById('runBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            return;
+        }
+
+        for (const algo of algorithms) {
+            if (!isRunning) break;
+
+            // Clone grid for each algorithm
+            const gridClone = grid.clone();
+            const rendererClone = new GridRenderer(document.getElementById('gridCanvas'), gridClone);
+            const visualizerClone = new Visualizer(rendererClone);
+
+            // Start recording
+            visualizerClone.startRecording();
+
+            console.log(`Running ${algo.name}...`);
+
+            const result = await algo.func(gridClone, visualizerClone, delay, allowDiagonal);
+
+            // Stop recording and store
+            const recording = visualizerClone.stopRecording();
+            algorithmReplays[algo.name] = recording;
+
+            metricsTracker.addResult(algo.name, result);
+            metricsTracker.displayResults();
+
+            // Store result for comparison dashboard
+            if (result.success && result.path) {
+                // Apply path smoothing
+                const smoothedPath = smoothPath(result.path, gridClone);
+                const smoothedCost = calculatePathCost(smoothedPath, allowDiagonal);
+
+                allAlgorithmResults.push({
+                    name: algo.name,
+                    path: result.path,
+                    smoothedPath: smoothedPath,
+                    color: ALGORITHM_COLORS[algo.name] || '#888888',
+                    metrics: {
+                        pathLength: result.pathLength,
+                        pathCost: result.pathCost,
+                        smoothedLength: smoothedPath.length - 1,
+                        smoothedCost: smoothedCost,
+                        nodesExplored: result.nodesExplored,
+                        timeElapsed: result.timeElapsed
+                    }
+                });
+            }
+
+            // Wait a bit before next algorithm
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Reset grid visualization
+            grid.reset();
+            renderer.render();
+        }
+
+        // Show best result
+        const best = metricsTracker.getBestAlgorithm();
+        if (best && best.path) {
+            grid.reset();
+            for (const cell of best.path) {
+                const gridCell = grid.getCell(cell.row, cell.col);
+                if (gridCell && !gridCell.isStart && !gridCell.isEnd) {
+                    gridCell.isPath = true;
+                }
+            }
+            renderer.render();
+        }
+
+        // Show comparison section if multiple results
+        if (allAlgorithmResults.length > 1) {
+            document.getElementById('comparisonSection').style.display = 'block';
+        }
+
+        // Show replay section if we have recordings
+        if (Object.keys(algorithmReplays).length > 0) {
+            document.getElementById('replaySection').style.display = 'block';
+            populateReplaySelect();
+        }
+
         isRunning = false;
         document.getElementById('runBtn').disabled = false;
         document.getElementById('stopBtn').disabled = true;
-        return;
     }
 
-    for (const algo of algorithms) {
-        if (!isRunning) break;
+    function populateReplaySelect() {
+        const select = document.getElementById('replayAlgorithmSelect');
+        select.innerHTML = '<option value="">-- Choose --</option>';
 
-        // Clone grid for each algorithm
-        const gridClone = grid.clone();
-        const rendererClone = new GridRenderer(document.getElementById('gridCanvas'), gridClone);
-        const visualizerClone = new Visualizer(rendererClone);
+        for (const algoName in algorithmReplays) {
+            const option = document.createElement('option');
+            option.value = algoName;
+            option.textContent = algoName;
+            select.appendChild(option);
+        }
+    }
 
-        // Start recording
-        visualizerClone.startRecording();
+    // Replay Controls
+    document.getElementById('replayAlgorithmSelect').addEventListener('change', (e) => {
+        document.getElementById('replayBtn').disabled = !e.target.value;
+    });
 
-        console.log(`Running ${algo.name}...`);
+    document.getElementById('replaySpeed').addEventListener('input', (e) => {
+        document.getElementById('replaySpeedLabel').textContent = e.target.value + '×';
+    });
 
-        const result = await algo.func(gridClone, visualizerClone, delay, allowDiagonal);
+    document.getElementById('replayBtn').addEventListener('click', async () => {
+        const algoName = document.getElementById('replayAlgorithmSelect').value;
+        const speed = parseFloat(document.getElementById('replaySpeed').value);
 
-        // Stop recording and store
-        const recording = visualizerClone.stopRecording();
-        algorithmReplays[algo.name] = recording;
+        if (!algoName || !algorithmReplays[algoName]) return;
 
-        metricsTracker.addResult(algo.name, result);
-        metricsTracker.displayResults();
+        document.getElementById('replayBtn').disabled = true;
+        document.getElementById('replayBtn').textContent = '⏸ Playing...';
 
-        // Store result for comparison dashboard
-        if (result.success && result.path) {
-            // Apply path smoothing
-            const smoothedPath = smoothPath(result.path, gridClone);
-            const smoothedCost = calculatePathCost(smoothedPath, allowDiagonal);
+        await visualizer.replay(algorithmReplays[algoName], grid, speed);
 
-            allAlgorithmResults.push({
-                name: algo.name,
-                path: result.path,
-                smoothedPath: smoothedPath,
-                color: ALGORITHM_COLORS[algo.name] || '#888888',
-                metrics: {
-                    pathLength: result.pathLength,
-                    pathCost: result.pathCost,
-                    smoothedLength: smoothedPath.length - 1,
-                    smoothedCost: smoothedCost,
-                    nodesExplored: result.nodesExplored,
-                    timeElapsed: result.timeElapsed
-                }
-            });
+        document.getElementById('replayBtn').disabled = false;
+        document.getElementById('replayBtn').textContent = '▶ Play Replay';
+    });
+
+    function stopSimulation() {
+        isRunning = false;
+        visualizer.stop();
+        document.getElementById('runBtn').disabled = false;
+        document.getElementById('stopBtn').disabled = true;
+    }
+
+    // Export Results
+    document.getElementById('exportCSVBtn').addEventListener('click', () => {
+        metricsTracker.exportToCSV();
+    });
+
+    document.getElementById('exportJSONBtn').addEventListener('click', () => {
+        metricsTracker.exportToJSON();
+    });
+
+    // Reset Parameters
+    document.getElementById('resetParamsBtn').addEventListener('click', () => {
+        document.getElementById('astarWeight').value = 1.0;
+        document.getElementById('gaPopulation').value = 50;
+        document.getElementById('gaGenerations').value = 100;
+        document.getElementById('gaMutationRate').value = 0.1;
+    });
+
+    // Preset Scenarios
+    document.getElementById('presetSelector').addEventListener('change', (e) => {
+        const preset = e.target.value;
+        if (preset) {
+            grid.loadPreset(preset);
+            renderer.render();
+            e.target.value = ''; // Reset selector
+        }
+    });
+
+    // Keyboard Shortcuts
+    document.addEventListener('keydown', (e) => {
+        // Ignore if typing in input field
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
+            return;
         }
 
-        // Wait a bit before next algorithm
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        // Reset grid visualization
-        grid.reset();
-        renderer.render();
-    }
-
-    // Show best result
-    const best = metricsTracker.getBestAlgorithm();
-    if (best && best.path) {
-        grid.reset();
-        for (const cell of best.path) {
-            const gridCell = grid.getCell(cell.row, cell.col);
-            if (gridCell && !gridCell.isStart && !gridCell.isEnd) {
-                gridCell.isPath = true;
-            }
-        }
-        renderer.render();
-    }
-
-    // Show comparison section if multiple results
-    if (allAlgorithmResults.length > 1) {
-        document.getElementById('comparisonSection').style.display = 'block';
-    }
-
-    // Show replay section if we have recordings
-    if (Object.keys(algorithmReplays).length > 0) {
-        document.getElementById('replaySection').style.display = 'block';
-        populateReplaySelect();
-    }
-
-    isRunning = false;
-    document.getElementById('runBtn').disabled = false;
-    document.getElementById('stopBtn').disabled = true;
-}
-
-function populateReplaySelect() {
-    const select = document.getElementById('replayAlgorithmSelect');
-    select.innerHTML = '<option value="">-- Choose --</option>';
-
-    for (const algoName in algorithmReplays) {
-        const option = document.createElement('option');
-        option.value = algoName;
-        option.textContent = algoName;
-        select.appendChild(option);
-    }
-}
-
-// Replay Controls
-document.getElementById('replayAlgorithmSelect').addEventListener('change', (e) => {
-    document.getElementById('replayBtn').disabled = !e.target.value;
-});
-
-document.getElementById('replaySpeed').addEventListener('input', (e) => {
-    document.getElementById('replaySpeedLabel').textContent = e.target.value + '×';
-});
-
-document.getElementById('replayBtn').addEventListener('click', async () => {
-    const algoName = document.getElementById('replayAlgorithmSelect').value;
-    const speed = parseFloat(document.getElementById('replaySpeed').value);
-
-    if (!algoName || !algorithmReplays[algoName]) return;
-
-    document.getElementById('replayBtn').disabled = true;
-    document.getElementById('replayBtn').textContent = '⏸ Playing...';
-
-    await visualizer.replay(algorithmReplays[algoName], grid, speed);
-
-    document.getElementById('replayBtn').disabled = false;
-    document.getElementById('replayBtn').textContent = '▶ Play Replay';
-});
-
-function stopSimulation() {
-    isRunning = false;
-    visualizer.stop();
-    document.getElementById('runBtn').disabled = false;
-    document.getElementById('stopBtn').disabled = true;
-}
-
-// Export Results
-document.getElementById('exportCSVBtn').addEventListener('click', () => {
-    metricsTracker.exportToCSV();
-});
-
-document.getElementById('exportJSONBtn').addEventListener('click', () => {
-    metricsTracker.exportToJSON();
-});
-
-// Reset Parameters
-document.getElementById('resetParamsBtn').addEventListener('click', () => {
-    document.getElementById('astarWeight').value = 1.0;
-    document.getElementById('gaPopulation').value = 50;
-    document.getElementById('gaGenerations').value = 100;
-    document.getElementById('gaMutationRate').value = 0.1;
-});
-
-// Preset Scenarios
-document.getElementById('presetSelector').addEventListener('change', (e) => {
-    const preset = e.target.value;
-    if (preset) {
-        grid.loadPreset(preset);
-        renderer.render();
-        e.target.value = ''; // Reset selector
-    }
-});
-
-// Keyboard Shortcuts
-document.addEventListener('keydown', (e) => {
-    // Ignore if typing in input field
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
-        return;
-    }
-
-    switch (e.key.toLowerCase()) {
-        case ' ': // Space - Run simulation
+        // Undo/Redo
+        if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
             e.preventDefault();
-            if (!isRunning) {
-                document.getElementById('runBtn').click();
-            }
-            break;
-        case 'escape': // Esc - Stop simulation
-            if (isRunning) {
-                document.getElementById('stopBtn').click();
-            }
-            break;
-        case 'c': // C - Clear grid
-            document.getElementById('clearBtn').click();
-            break;
-        case 's': // S - Save grid
-            document.getElementById('saveGridBtn').click();
-            break;
-        case 'l': // L - Load grid
-            document.getElementById('loadGridBtn').click();
-            break;
-        case 'r': // R - Random obstacles
-            document.getElementById('randomObstaclesBtn').click();
-            break;
+            performUndo();
+            return;
+        }
+
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+            e.preventDefault();
+            performRedo();
+            return;
+        }
+
+        switch (e.key.toLowerCase()) {
+            case ' ': // Space - Run simulation
+                e.preventDefault();
+                if (!isRunning) {
+                    document.getElementById('runBtn').click();
+                }
+                break;
+            case 'escape': // Esc - Stop simulation
+                if (isRunning) {
+                    document.getElementById('stopBtn').click();
+                }
+                break;
+            case 'c': // C - Clear grid
+                document.getElementById('clearBtn').click();
+                break;
+            case 's': // S - Save grid
+                document.getElementById('saveGridBtn').click();
+                break;
+            case 'l': // L - Load grid
+                document.getElementById('loadGridBtn').click();
+                break;
+            case 'r': // R - Random obstacles
+                document.getElementById('randomObstaclesBtn').click();
+                break;
+        }
+    });
+
+    function performUndo() {
+        const snapshot = actionHistory.undo();
+        if (snapshot) {
+            grid.loadGrid(snapshot);
+            renderer.render();
+            console.log('Undo - History:', actionHistory.past.length, 'steps');
+        }
     }
-});
+
+    function performRedo() {
+        const snapshot = actionHistory.redo();
+        if (snapshot) {
+            grid.loadGrid(snapshot);
+            renderer.render();
+            console.log('Redo - Future:', actionHistory.future.length, 'steps');
+        }
+    }

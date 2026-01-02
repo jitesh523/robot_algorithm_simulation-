@@ -253,6 +253,140 @@ class Grid {
                 }
                 this.setCell(2, 2, 'start');
                 this.setCell(37, 47, 'end');
+            },
+            spiral: () => {
+                // Spiral maze pattern
+                let row = 5;
+                let col = 5;
+                let size = 30;
+
+                while (size > 2) {
+                    // Top
+                    for (let c = col; c < col + size; c++) {
+                        this.grid[row][c].isObstacle = true;
+                    }
+                    // Right
+                    for (let r = row; r < row + size; r++) {
+                        this.grid[r][col + size - 1].isObstacle = true;
+                    }
+                    // Bottom
+                    for (let c = col + size - 1; c >= col; c--) {
+                        this.grid[row + size - 1][c].isObstacle = true;
+                    }
+                    // Left (with gap)
+                    for (let r = row + size - 1; r > row; r--) {
+                        if (r !== row + 2) {
+                            this.grid[r][col].isObstacle = true;
+                        }
+                    }
+
+                    row += 2;
+                    col += 2;
+                    size -= 4;
+                }
+                this.setCell(3, 3, 'start');
+                this.setCell(35, 45, 'end');
+            },
+            rooms: () => {
+                // Multiple rooms with doorways
+                // Room 1 (top-left)
+                for (let r = 5; r < 18; r++) {
+                    this.grid[r][10].isObstacle = true;
+                    this.grid[r][25].isObstacle = true;
+                }
+                for (let c = 10; c < 26; c++) {
+                    if (c !== 17) {
+                        this.grid[5][c].isObstacle = true;
+                        this.grid[18][c].isObstacle = true;
+                    }
+                }
+
+                // Room 2 (top-right)
+                for (let r = 5; r < 18; r++) {
+                    this.grid[r][30].isObstacle = true;
+                    this.grid[r][45].isObstacle = true;
+                }
+                for (let c = 30; c < 46; c++) {
+                    this.grid[5][c].isObstacle = true;
+                    if (c !== 37) {
+                        this.grid[18][c].isObstacle = true;
+                    }
+                }
+
+                // Room 3 (bottom)
+                for (let r = 22; r < 35; r++) {
+                    if (r !== 28) {
+                        this.grid[r][15].isObstacle = true;
+                    }
+                    this.grid[r][40].isObstacle = true;
+                }
+                for (let c = 15; c < 41; c++) {
+                    this.grid[22][c].isObstacle = true;
+                    this.grid[35][c].isObstacle = true;
+                }
+
+                this.setCell(7, 12, 'start');
+                this.setCell(33, 38, 'end');
+            },
+            diagonal_corridors: () => {
+                // Diagonal passages
+                for (let i = 0; i < 35; i++) {
+                    if (i % 3 !== 0) {
+                        this.grid[5 + i][10 + i].isObstacle = true;
+                        this.grid[5 + i][40 - i].isObstacle = true;
+                    }
+                }
+                this.setCell(2, 2, 'start');
+                this.setCell(37, 47, 'end');
+            },
+            ushaped: () => {
+                // U-shaped obstacle forcing long detour
+                for (let r = 5; r < 35; r++) {
+                    this.grid[r][20].isObstacle = true;
+                }
+                for (let c = 20; c < 45; c++) {
+                    this.grid[35][c].isObstacle = true;
+                }
+                for (let r = 5; r < 35; r++) {
+                    this.grid[r][45].isObstacle = true;
+                }
+                this.setCell(20, 5, 'start');
+                this.setCell(20, 40, 'end');
+            },
+            islands: () => {
+                // Island hopping with water terrain
+                // Create water areas
+                for (let r = 10; r < 30; r++) {
+                    for (let c = 5; c < 15; c++) {
+                        this.grid[r][c].terrainType = 'water';
+                        this.grid[r][c].terrainCost = 3.0;
+                    }
+                }
+                for (let r = 15; r < 35; r++) {
+                    for (let c = 20; c < 30; c++) {
+                        this.grid[r][c].terrainType = 'water';
+                        this.grid[r][c].terrainCost = 3.0;
+                    }
+                }
+                for (let r = 5; r < 25; r++) {
+                    for (let c = 35; c < 45; c++) {
+                        this.grid[r][c].terrainType = 'water';
+                        this.grid[r][c].terrainCost = 3.0;
+                    }
+                }
+
+                // Create narrow land bridges
+                for (let c = 15; c < 20; c++) {
+                    this.grid[20][c].terrainType = 'normal';
+                    this.grid[20][c].terrainCost = 1.0;
+                }
+                for (let c = 30; c < 35; c++) {
+                    this.grid[15][c].terrainType = 'normal';
+                    this.grid[15][c].terrainCost = 1.0;
+                }
+
+                this.setCell(5, 2, 'start');
+                this.setCell(35, 47, 'end');
             }
         };
 

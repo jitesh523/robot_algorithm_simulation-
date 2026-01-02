@@ -102,10 +102,18 @@ function setupEventListeners() {
         if (isDrawing) {
             handleCanvasClick(e);
         }
+        // Show tooltip
+        showCellTooltip(e);
     });
 
     canvas.addEventListener('mouseup', () => {
         isDrawing = false;
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+        isDrawing = false;
+        // Hide tooltip
+        document.getElementById('cellTooltip').style.display = 'none';
     });
 
     canvas.addEventListener('mouseleave', () => {
@@ -195,6 +203,50 @@ function handleCanvasClick(event) {
         grid.setCell(row, col, currentMode);
         renderer.render();
     }
+}
+
+function showCellTooltip(event) {
+    const tooltip = document.getElementById('cellTooltip');
+    const cell = renderer.getCellFromMouseEvent(event);
+
+    if (!cell) {
+        tooltip.style.display = 'none';
+        return;
+    }
+
+    // Build tooltip content
+    let content = `<div style="line-height: 1.5;">`;
+    content += `<strong>Cell (${cell.row}, ${cell.col})</strong><br>`;
+
+    // Terrain info
+    const terrainNames = {
+        'normal': 'Normal',
+        'grass': 'Grass',
+        'mud': 'Mud',
+        'water': 'Water',
+        'sand': 'Sand'
+    };
+    content += `Terrain: ${terrainNames[cell.terrainType] || 'Normal'} (${cell.terrainCost.toFixed(1)}×)<br>`;
+
+    // Cell state
+    if (cell.isStart) content += `<span style="color: #22c55e;">● Start Point</span><br>`;
+    if (cell.isEnd) content += `<span style="color: #ef4444;">● End Point</span><br>`;
+    if (cell.isObstacle) content += `<span style="color: #94a3b8;">● Obstacle</span><br>`;
+    if (cell.isPath) content += `<span style="color: #fbbf24;">● On Path</span><br>`;
+    if (cell.isVisited) content += `<span style="color: #a78bfa;">● Visited</span><br>`;
+    if (cell.isExploring) content += `<span style="color: #60a5fa;">● Exploring</span><br>`;
+
+    // Distance (if calculated)
+    if (cell.distance && cell.distance !== Infinity) {
+        content += `Distance: ${cell.distance.toFixed(2)}`;
+    }
+
+    content += `</div>`;
+
+    tooltip.innerHTML = content;
+    tooltip.style.display = 'block';
+    tooltip.style.left = (event.clientX + 15) + 'px';
+    tooltip.style.top = (event.clientY + 15) + 'px';
 }
 
 async function runSimulation() {

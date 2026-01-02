@@ -34,16 +34,59 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initializeGrid() {
+    // Load saved grid size from localStorage
+    let rows = GRID_ROWS;
+    let cols = GRID_COLS;
+
+    const savedSize = localStorage.getItem('gridSize');
+    if (savedSize) {
+        const { rows: savedRows, cols: savedCols } = JSON.parse(savedSize);
+        rows = savedRows;
+        cols = savedCols;
+        document.getElementById('gridRows').value = rows;
+        document.getElementById('gridCols').value = cols;
+    }
+
     const canvas = document.getElementById('gridCanvas');
-    grid = new Grid(GRID_ROWS, GRID_COLS, CELL_SIZE);
+    grid = new Grid(rows, cols, CELL_SIZE);
     renderer = new GridRenderer(canvas, grid);
     visualizer = new Visualizer(renderer);
 
     // Set default start and end
     grid.setCell(5, 5, 'start');
-    grid.setCell(GRID_ROWS - 6, GRID_COLS - 6, 'end');
+    grid.setCell(rows - 6, cols - 6, 'end');
 
     renderer.render();
+}
+
+function resizeGrid() {
+    const rows = parseInt(document.getElementById('gridRows').value);
+    const cols = parseInt(document.getElementById('gridCols').value);
+
+    if (rows < 10 || rows > 80 || cols < 10 || cols > 100) {
+        alert('Rows must be 10-80, Columns must be 10-100');
+        return;
+    }
+
+    // Save to localStorage
+    localStorage.setItem('gridSize', JSON.stringify({ rows, cols }));
+
+    // Recreate grid
+    const canvas = document.getElementById('gridCanvas');
+    grid = new Grid(rows, cols, CELL_SIZE);
+    renderer = new GridRenderer(canvas, grid);
+    visualizer = new Visualizer(renderer);
+
+    // Set default start and end for the new grid
+    grid.setCell(5, 5, 'start');
+    grid.setCell(rows - 6, cols - 6, 'end');
+
+    renderer.render();
+
+    // Clear any ongoing simulations
+    if (isRunning) {
+        stopSimulation();
+    }
 }
 
 function setupEventListeners() {
@@ -86,6 +129,17 @@ function setupEventListeners() {
         renderer.render();
         metricsTracker.clear();
         metricsTracker.displayResults();
+    });
+
+    // Random Obstacles
+    document.getElementById('randomObstaclesBtn').addEventListener('click', () => {
+        grid.addRandomObstacles();
+        renderer.render();
+    });
+
+    // Grid Size
+    document.getElementById('applyGridSizeBtn').addEventListener('click', () => {
+        resizeGrid();
     });
 
     document.getElementById('randomObstaclesBtn').addEventListener('click', () => {

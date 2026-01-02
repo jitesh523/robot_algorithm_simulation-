@@ -26,9 +26,26 @@
                     <div class="control-group">
                         <h3>Grid Controls</h3>
                         <div class="button-group">
-                            <button id="clearBtn" class="btn btn-secondary">Clear Grid</button>
-                            <button id="randomObstaclesBtn" class="btn btn-secondary">Random Obstacles</button>
+                            <button id="clearBtn" class="btn btn-secondary">🗑️ Clear Grid</button>
+                            <button id="randomObstaclesBtn" class="btn btn-secondary">🎲 Random Obstacles</button>
                         </div>
+                    </div>
+
+                    <div class="control-group">
+                        <h3>Grid Size</h3>
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <label style="flex: 1;">
+                                Rows:
+                                <input type="number" id="gridRows" min="10" max="80" value="40"
+                                    style="width: 60px; padding: 4px; margin-left: 8px; border-radius: 4px; border: 1px solid #475569; background: #334155; color: #e2e8f0;">
+                            </label>
+                            <label style="flex: 1;">
+                                Cols:
+                                <input type="number" id="gridCols" min="10" max="100" value="50"
+                                    style="width: 60px; padding: 4px; margin-left: 8px; border-radius: 4px; border: 1px solid #475569; background: #334155; color: #e2e8f0;">
+                            </label>
+                        </div>
+                        <button id="applyGridSizeBtn" class="btn btn-primary" style="width: 100%;">Apply Size</button>
                     </div>
 
                     <div class="control-group">

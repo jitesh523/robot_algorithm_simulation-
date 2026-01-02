@@ -301,6 +301,16 @@
                     </label>
                 </div>
             </div>
+
+            <!-- Statistics Dashboard -->
+            <div class="results-section" id="statisticsSection" style="display: none;">
+                <h2>📊 Run Statistics</h2>
+                <div style="margin-bottom: 15px;">
+                    <button id="clearStatsBtn" class="btn btn-secondary">🗑️ Clear History</button>
+                    <span id="statsInfo" style="margin-left: 15px; color: #94a3b8; font-size: 0.9rem;"></span>
+                </div>
+                <div id="statisticsContainer"></div>
+            </div>
         </main>
 
         <!-- Cell Info Tooltip -->
@@ -320,6 +330,7 @@
     <script src="bfs.js"></script>
     <script src="visualizer.js"></script>
     <script src="metrics.js"></script>
+    <script src="statistics.js"></script>
     <script src="app.js"></script>
 </body>
 
